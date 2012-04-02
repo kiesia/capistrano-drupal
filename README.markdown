@@ -1,7 +1,8 @@
 Capistrano-Drupal
 =================
 
-This is a basic recipe for Drupal deployment with Capistrano.
+This is a basic recipe for Drupal deployment with Capistrano. Currently this 
+handles Drupal multisite installs when :sites is set.
 
 Requirements
 ------------
