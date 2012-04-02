@@ -4,6 +4,8 @@ Capistrano-Drupal
 This is a basic recipe for Drupal deployment with Capistrano. Currently this 
 handles Drupal multisite installs when :sites is set.
 
+This recipe assumes that we do not require sudo on the target server.
+
 Requirements
 ------------
 
@@ -27,7 +29,10 @@ Where 'stage' is your target stage, such as _staging_ or _production_. This will
 + create an app directory, prefixed with the stage name
 + created directories for shared files, such as files and .htaccess (on _staging_)
 
-TODO upload a .htaccess file with password protection when setting up _staging_
+Database deployment must be made by hand.
+
+*TODO* add check for htaccess file in shared files dir. 
+*TODO* upload a .htaccess file with password protection when setting up _staging_.
 
 Deploy process
 --------------
