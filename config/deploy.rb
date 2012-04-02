@@ -1,10 +1,11 @@
 # Settings
-# Load multistage ext and set stages
+
+# set deployment stages
 set :stages, %w(production staging dev)
 set :default_stage, "staging"
 
 # multisite uri's for symlinking and drush
-set :sites, ["site1.example.com", "site2.example.com"]
+# set :sites, ["site1.example.com", "site2.example.com"]
 
 # SSH settings
 set :domain,  "example.com" 
@@ -28,7 +29,7 @@ set :keep_releases, 5
 ssh_options[:paranoid] = false 
 ssh_options[:forward_agent] = true
 
-# Drush command.
+# Drush command, full path and php settings may have to go here (see drush README.txt)
 set :drush, 'drush'
 
 # Drupal specific methods
