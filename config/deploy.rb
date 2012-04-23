@@ -4,8 +4,12 @@
 set :stages, %w(production staging dev)
 set :default_stage, "staging"
 
-# multisite uri's for symlinking and drush
-# set :sites, ["site1.example.com", "site2.example.com"]
+# multisite uri's for symlinking and drush, leave at least default in place
+# set :sites, %w(default, site1.example.com, site2.example.com)
+set :sites, %w(default)
+
+# themes based on SASS which require compilation
+# set :sass_themes, %(zen)
 
 # SSH settings
 set :domain,  "example.com" 
@@ -13,8 +17,9 @@ set :user,    "example-user"
  
 # Application settings
 set :application, "example" 
+set :www_user, "www-data"
+
 set :copy_exclude, ["Capfile", "config", ".git", ".gitignore", ".gitmodules", "sites/*/files/", "sites/*/settings.php", "sites/*/settings-dev.php"] 
- 
 set :repository, "git@github.com:example/example.git"
 set :scm, :git
 set :branch, "master"
@@ -33,7 +38,8 @@ ssh_options[:forward_agent] = true
 set :drush, 'drush'
 
 # Drupal specific methods
-after 'deploy:setup', 'drupal:setup'
+# after 'deploy:setup', 'drupal:setup'
+after 'deploy:setup', 'drupal:setup', 'drupal:setup_ownership'
 after 'deploy:symlink', 'drupal:symlink', 'drupal:clear_cache'
 before 'deploy:cleanup', 'drupal:permission_fix'
 
@@ -42,14 +48,9 @@ namespace :drupal do
   symlinks shared files dirs and settings.php files
   DESC
   task :symlink, :except => { :no_release => true } do
-    run "ln -s #{shared_path}/default/files #{latest_release}/sites/default/files"
-    run "ln -s #{latest_release}/sites/default/settings-#{stage}.php #{latest_release}/sites/default/settings.php"
-
-    if exists?(:sites)
-      sites.each do |dir|
-        run "ln -s #{shared_path}/#{dir}/files #{latest_release}/sites/#{dir}/files"
-        run "ln -s #{latest_release}/sites/#{dir}/settings-#{stage}.php #{latest_release}/sites/#{dir}/settings.php"
-      end
+    sites.each do |dir|
+      run "#{try_sudo} ln -s #{shared_path}/#{dir}/files #{latest_release}/sites/#{dir}/files"
+      run "#{try_sudo} ln -s #{latest_release}/sites/#{dir}/settings-#{stage}.php #{latest_release}/sites/#{dir}/settings.php"
     end
   end
   
@@ -74,35 +75,28 @@ namespace :drupal do
   clears caches with drupal
   DESC
   task :clear_cache, :except => { :no_release => true } do
-    logger.info "clearing default drupal cache"
-    run "#{drush} -r #{latest_release} --quiet cc all"
-
-    if exists?(:sites)
-      sites.each do |dir|
-        logger.info "clearing drupal cache for #{dir}"
-        run "#{drush} -r #{latest_release} -l http://#{dir} --quiet cc all"
-      end
+    sites.each do |dir|
+      logger.info "clearing drupal cache for #{dir}"
+      run "#{try_sudo} #{drush} -r #{latest_release} -l http://#{dir} --quiet cc all"
     end
   end
 
   desc <<-DESC
   compiles sass/scss files with compass (we are assuming that all multisite sites use the same theme)
   DESC
-  task :compass_compile do
-    logger.info "compiling scss/sass files"
-    run "#{drush} -r #{latest_release} --quiet compass-compile"
+  task :compass_compile, :except => { :no_release => true } do
+    sass_themes.each do |theme|
+      logger.info "compiling sass files for #{theme} theme"
+      run "#{try_sudo} #{drush} -r #{latest_release} --quiet compass-compile #{theme}"
+    end
   end
   
   desc <<-DESC
   creates shared drupal directories
   DESC
   task :setup do
-    run "mkdir -p #{shared_path}/default/files"
-
-    if exists?(:sites)
-      sites.each do |dir|
-        run "mkdir -p #{shared_path}/#{dir}/files"
-      end
+    sites.each do |dir|
+      run "mkdir -p #{shared_path}/#{dir}/files"
     end
   end
 end
