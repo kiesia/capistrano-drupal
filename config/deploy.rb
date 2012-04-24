@@ -38,8 +38,7 @@ ssh_options[:forward_agent] = true
 set :drush, 'drush'
 
 # Drupal specific methods
-# after 'deploy:setup', 'drupal:setup'
-after 'deploy:setup', 'drupal:setup', 'drupal:setup_ownership'
+after 'deploy:setup', 'drupal:setup'
 after 'deploy:symlink', 'drupal:symlink', 'drupal:clear_cache'
 before 'deploy:cleanup', 'drupal:permission_fix'
 
@@ -49,8 +48,8 @@ namespace :drupal do
   DESC
   task :symlink, :except => { :no_release => true } do
     sites.each do |dir|
-      run "#{try_sudo} ln -s #{shared_path}/#{dir}/files #{latest_release}/sites/#{dir}/files"
-      run "#{try_sudo} ln -s #{latest_release}/sites/#{dir}/settings-#{stage}.php #{latest_release}/sites/#{dir}/settings.php"
+      run "ln -s #{shared_path}/#{dir}/files #{latest_release}/sites/#{dir}/files"
+      run "ln -s #{latest_release}/sites/#{dir}/settings-#{stage}.php #{latest_release}/sites/#{dir}/settings.php"
     end
   end
   
@@ -67,7 +66,7 @@ namespace :drupal do
       directories = (releases - releases.last(count)).map { |release|
         File.join(releases_path, release) }.join(" ")
 
-      run "chmod -R +w #{directories}"
+      run "#{try_sudo} chmod -R +w #{directories}"
     end
   end
   
@@ -87,7 +86,7 @@ namespace :drupal do
   task :compass_compile, :except => { :no_release => true } do
     sass_themes.each do |theme|
       logger.info "compiling sass files for #{theme} theme"
-      run "#{try_sudo} #{drush} -r #{latest_release} --quiet compass-compile #{theme}"
+      run "#{drush} -r #{latest_release} --quiet compass-compile #{theme}"
     end
   end
   
