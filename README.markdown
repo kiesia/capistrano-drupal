@@ -20,8 +20,8 @@ The standard environment for capistrano deployment, plus:
 Setup process
 -------------
 
-Setup is largely automated, just open a terminal in your project root and 
-enter `cap stage deploy:setup`
+Once you have entered your settings in `config/deploy.rb`, setup is largely automated.
+Just open a terminal in your project root and enter `cap stage deploy:setup`
 
 Where 'stage' is your target stage, such as _staging_ or _production_. This will:
 
